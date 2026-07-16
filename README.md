@@ -69,12 +69,6 @@ Recommended fields in the template UI:
 | `bqDatasetId` | Text | `google_ads_logs` | Yes |
 | `bqLocation` | Dropdown | `US` | Optional |
 
-`bqTableId` is optional. If it is not present in the template UI, the tag uses:
-
-```text
-google_dm_api_logs
-```
-
 ## BigQuery project requirement
 
 The BigQuery dataset should be created in the **same Google Cloud project as the server-side GTM tagging server**.
