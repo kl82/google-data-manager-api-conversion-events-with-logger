@@ -1,5 +1,10 @@
 # Permissions
 
+This template has two permission layers:
+
+1. **Server-side GTM template permissions** — what the custom template is allowed to do.
+2. **External account permissions** — what the Cloud Run service account is allowed to access in Google Cloud and Google Ads.
+
 ## Template permissions
 
 The template requires the following server-side GTM permissions.
@@ -13,7 +18,11 @@ https://*.stape.io/*
 https://*.stape.net/*
 ```
 
+`datamanager.googleapis.com` is required to send conversion events.
+
 `bigquery.googleapis.com` is required only for automatic dataset/table creation through the BigQuery REST API.
+
+Stape endpoints are required only if you use the Stape authentication flow.
 
 ### Uses Google credentials
 
@@ -26,16 +35,20 @@ https://www.googleapis.com/auth/bigquery
 
 `bigquery` is required for automatic BigQuery dataset/table creation via REST API.
 
+If you create the BigQuery dataset/table manually and remove auto-create logic, the template can rely on `BigQuery.insert` and does not need BigQuery REST calls.
+
 ### Accesses BigQuery
+
+Recommended during initial testing:
 
 ```text
 operation: write
-projectId: *
-datasetId: *
-tableId: *
+projectId: PROJECT_ID
+datasetId: DATASET_ID
+tableId: google_dm_api_logs
 ```
 
-You can narrow these permissions after importing the template.
+You can temporarily use wildcards while debugging, then narrow the permissions after the final project/dataset/table are known.
 
 ### Reads request headers
 
@@ -53,11 +66,15 @@ x-gtm-api-key
 
 The template reads event data to build the Data Manager event payload and diagnostic logging fields.
 
-## Cloud Run service account IAM
+## Google Cloud IAM for BigQuery logging
 
-For writing rows to an existing table, the Cloud Run service account needs a role that includes:
+The Cloud Run service account attached to the server-side GTM service needs BigQuery access in the same Google Cloud project as the tagging server.
+
+For writing rows to an existing table, the service account needs a role that includes:
 
 ```text
+bigquery.datasets.get
+bigquery.tables.get
 bigquery.tables.updateData
 ```
 
@@ -66,7 +83,6 @@ For automatic resource creation, it also needs:
 ```text
 bigquery.datasets.create
 bigquery.tables.create
-bigquery.tables.get
 ```
 
 For a quick test, you can temporarily grant:
@@ -76,3 +92,66 @@ BigQuery Admin
 ```
 
 After validation, reduce the permissions to a custom role or narrower dataset-level access.
+
+## Google Ads access for conversion uploads
+
+The Cloud Run service account also needs access in Google Ads. BigQuery IAM roles do not grant Google Ads access.
+
+Add the service account email in:
+
+```text
+Google Ads → Admin → Access and security → Users
+```
+
+Recommended access level:
+
+```text
+Standard
+```
+
+Use `Admin` only if the service account also needs to create/edit conversion actions or manage users/access.
+
+If the service account is added directly to the target Google Ads account, use the target account ID as both:
+
+```text
+Operating Customer ID
+Login Account ID
+```
+
+If the service account is added to a manager account, use:
+
+```text
+Operating Customer ID = target client account ID
+Login Account ID      = manager account ID
+```
+
+The effective access path must allow the service account to reach the target Google Ads account.
+
+## Google Ads conversion action requirements
+
+For Google Ads offline conversions or enhanced conversions for leads, the Data Manager API destination should use a conversion action with type:
+
+```text
+UPLOAD_CLICKS
+```
+
+In Google Ads UI this is:
+
+```text
+Website (Import from clicks)
+```
+
+Use the conversion action `ctId` as the template's Conversion Event ID / Product Destination ID.
+
+## Required Data Manager destination fields
+
+For Google Ads with own Google credentials:
+
+```text
+Product: Google Ads
+Operating Customer ID: target Google Ads account ID
+Login Account ID: account where the service account has access
+Conversion Event ID: Google Ads conversion action ctId
+```
+
+Use numeric IDs without dashes.
