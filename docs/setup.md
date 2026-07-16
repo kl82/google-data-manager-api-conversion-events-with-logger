@@ -171,3 +171,17 @@ Conversion Event ID is the ctId of an UPLOAD_CLICKS conversion action
 Event has at least one matching signal
 BigQuery dataset is in the same project as the sGTM Cloud Run service
 ```
+
+
+## Service Account Token Creator role
+
+When using **Own Google Credentials**, grant the Cloud Run runtime service account `roles/iam.serviceAccountTokenCreator` on itself so the tag can obtain OAuth access tokens for Google APIs.
+
+```bash
+PROJECT_ID="PROJECT_ID"
+SA_EMAIL="sgtm-data-manager-logger@PROJECT_ID.iam.gserviceaccount.com"
+
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL"   --project="$PROJECT_ID"   --member="serviceAccount:$SA_EMAIL"   --role="roles/iam.serviceAccountTokenCreator"
+```
+
+Also grant this role to any human user or CI/CD principal that impersonates the service account during testing or deployment.

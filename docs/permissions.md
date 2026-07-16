@@ -66,6 +66,36 @@ x-gtm-api-key
 
 The template reads event data to build the Data Manager event payload and diagnostic logging fields.
 
+
+
+## Google Cloud IAM for Data Manager API / Google Ads uploads
+
+For **Own Google Credentials**, the tag uses Google Cloud Application Default Credentials from the sGTM Cloud Run runtime and requests OAuth tokens for Google APIs.
+
+The Cloud Run runtime service account should have:
+
+```text
+Service Account Token Creator
+roles/iam.serviceAccountTokenCreator
+```
+
+Grant it on the service account itself in the same project:
+
+```bash
+PROJECT_ID="PROJECT_ID"
+SA_EMAIL="sgtm-data-manager-logger@PROJECT_ID.iam.gserviceaccount.com"
+
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL"   --project="$PROJECT_ID"   --member="serviceAccount:$SA_EMAIL"   --role="roles/iam.serviceAccountTokenCreator"
+```
+
+This is separate from Google Ads account access. The IAM role allows the Cloud Run service account to obtain Google API access tokens; Google Ads access determines whether those API calls are authorized to upload conversions to the Ads account.
+
+If a human user or CI/CD job impersonates this service account for testing/deployment, grant the same role to that principal on the service account:
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL"   --project="$PROJECT_ID"   --member="user:YOUR_EMAIL@example.com"   --role="roles/iam.serviceAccountTokenCreator"
+```
+
 ## Google Cloud IAM for BigQuery logging
 
 The Cloud Run service account attached to the server-side GTM service needs BigQuery access in the same Google Cloud project as the tagging server.

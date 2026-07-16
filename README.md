@@ -117,6 +117,41 @@ Example service account:
 sgtm-data-manager-logger@PROJECT_ID.iam.gserviceaccount.com
 ```
 
+
+## Required IAM role for Google API access tokens
+
+When using **Own Google Credentials**, the template calls Google APIs from the sGTM Cloud Run environment. The Cloud Run runtime service account must be able to mint OAuth access tokens for Google APIs.
+
+Grant the Cloud Run service account the following role on the service account it runs as:
+
+```text
+Service Account Token Creator
+roles/iam.serviceAccountTokenCreator
+```
+
+This role includes the permission needed to generate OAuth access tokens:
+
+```text
+iam.serviceAccounts.getAccessToken
+```
+
+For a Cloud Run-based sGTM setup, this usually means granting the role to the service account **on itself**:
+
+```bash
+PROJECT_ID="PROJECT_ID"
+SA_EMAIL="sgtm-data-manager-logger@PROJECT_ID.iam.gserviceaccount.com"
+
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL"   --project="$PROJECT_ID"   --member="serviceAccount:$SA_EMAIL"   --role="roles/iam.serviceAccountTokenCreator"
+```
+
+If you test locally with impersonation, for example with `gcloud auth print-access-token --impersonate-service-account=...`, your user also needs `roles/iam.serviceAccountTokenCreator` on that service account:
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL"   --project="$PROJECT_ID"   --member="user:YOUR_EMAIL@example.com"   --role="roles/iam.serviceAccountTokenCreator"
+```
+
+Without this role, Data Manager or BigQuery REST calls may fail before the request is sent because the runtime cannot obtain the access token required by `getGoogleAuth()`.
+
 ## Google Ads requirements for sending conversions
 
 BigQuery permissions are not enough. To send conversions to Google Ads through Data Manager API, the same Cloud Run service account also needs Google Ads access and the Google Ads destination must be configured correctly.

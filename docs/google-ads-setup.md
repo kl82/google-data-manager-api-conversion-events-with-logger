@@ -18,6 +18,29 @@ Standard
 
 Use `Admin` only if the service account also needs to create or edit conversion actions, manage account access, or perform admin-only account changes.
 
+
+## 1A. Google Cloud IAM role for token creation
+
+Before Google Ads can receive conversions, the sGTM Cloud Run runtime must be able to obtain OAuth access tokens for Google APIs.
+
+Grant the Cloud Run service account:
+
+```text
+Service Account Token Creator
+roles/iam.serviceAccountTokenCreator
+```
+
+Recommended binding for Cloud Run-based sGTM:
+
+```bash
+PROJECT_ID="PROJECT_ID"
+SA_EMAIL="sgtm-data-manager-logger@PROJECT_ID.iam.gserviceaccount.com"
+
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL"   --project="$PROJECT_ID"   --member="serviceAccount:$SA_EMAIL"   --role="roles/iam.serviceAccountTokenCreator"
+```
+
+This role is required for access-token creation. It does **not** replace adding the same service account as a user in Google Ads.
+
 ## 2. Direct access vs manager account access
 
 ### Direct access
