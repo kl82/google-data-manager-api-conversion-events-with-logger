@@ -1,0 +1,10 @@
+{
+  "name": "google-data-manager-api-conversion-events-with-logger",
+  "version": "0.1.0",
+  "template_file": "template/Google_Data_Manager_API_Conversion_Events_with_Logger.tpl",
+  "default_bigquery_table": "google_dm_api_logs",
+  "notes": [
+    "Template sanitized for GitHub by replacing client-specific BigQuery project permission with wildcard.",
+    "No license is included. Verify upstream license before public release."
+  ]
+}
